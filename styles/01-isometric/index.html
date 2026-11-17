@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#edf2e9">
+  <link rel="icon" href="data:,">
+  <title>아이소메트릭 · BangMotion Visual Director</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    body { display: grid; place-items: center; background: #edf2e9; font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif; }
+    main { width: min(100vw, 177.777778vh); aspect-ratio: 16 / 9; background: linear-gradient(165deg, #e5f0ee, #faf2df); }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+  <script type="importmap">{"imports":{"three":"../../vendor/three/build/three.module.min.js","three/addons/":"../../vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+  <main aria-label="강과 아치 다리, 두 집과 일곱 나무가 있는 파스텔 미니어처 섬">
+    <canvas role="img" aria-label="5초 동안 반복되는 정사영 아이소메트릭 풍경"></canvas>
+  </main>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>BangMotion Visual Director — 그래픽 스타일 도감</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./gallery.css">
+  <script type="module" src="./gallery.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#gallery">스타일 목록으로 건너뛰기</a>
+  <section id="selection" class="selection" aria-label="스타일 선택 결과" hidden>
+    <div class="selection-inner">
+      <div><strong id="selection-title"></strong><p id="selection-status" role="status" aria-live="polite"></p></div>
+      <div class="copy-group">
+        <label for="selection-text">AI 에이전트(Claude·Codex·Antigravity)에게 이렇게 말하세요:</label>
+        <div class="copy-field"><input id="selection-text" readonly spellcheck="false"><button id="copy" type="button">복사</button></div>
+      </div>
+    </div>
+  </section>
+  <main>
+    <header class="page-header">
+      <p class="eyebrow"><span class="brand-mark" aria-hidden="true">B</span> BANGMOTION <span class="edition">스타일 컬렉션 / 01—08</span></p>
+      <h1>BangMotion Visual Director <span>— 그래픽 스타일 도감</span></h1>
+      <p class="intro">같은 장면을 8가지 스타일로 그린 5초 데모입니다. 마음에 드는 스타일을 고르세요.</p>
+    </header>
+    <div class="gallery-toolbar">
+      <div><span class="live-dot" aria-hidden="true"></span><strong id="style-count">스타일 불러오는 중</strong><span class="toolbar-separator">/</span><span>하나의 장면, 여덟 가지 시선</span></div>
+      <p>카드로 미리보기 <span aria-hidden="true">·</span> 2개를 골라 비교 <span aria-hidden="true">·</span> <kbd>1</kbd>–<kbd>8</kbd> 빠르게 열기</p>
+    </div>
+    <p id="catalog-status" role="status" aria-live="polite">스타일 정보를 불러오고 있습니다.</p>
+    <section id="gallery" class="gallery-grid" aria-label="그래픽 스타일 목록" tabindex="-1"></section>
+    <footer class="page-footer"><span>마음에 드는 스타일을 선택하면 다음 제작으로 이어집니다.</span><span>5초 반복 재생 <span aria-hidden="true">/</span> 16:9</span></footer>
+  </main>
+  <aside id="compare-tray" class="compare-tray" aria-label="스타일 비교 목록" hidden>
+    <span id="compare-summary" role="status"></span>
+    <button id="compare-open" type="button" disabled>2개를 골라 비교</button>
+    <button id="compare-clear" class="quiet" type="button">비우기</button>
+  </aside>
+  <dialog id="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <div class="dialog-header"><div><p id="dialog-eyebrow" class="eyebrow">5초 스타일 미리보기</p><h2 id="dialog-title"></h2></div><button id="dialog-close" class="quiet" type="button" aria-label="미리보기 닫기 (Esc)">닫기 <kbd>Esc</kbd></button></div>
+    <div id="dialog-content"></div>
+  </dialog>
+  <noscript>스타일 갤러리를 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
+</body>
+</html>

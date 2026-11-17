@@ -1,0 +1,6 @@
+{
+  "name": "bangmotion-visual-director-scripts",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": { "playwright-core": "^1.49.0" }
+}

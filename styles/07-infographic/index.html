@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F4F1EA">
+  <link rel="icon" href="data:,">
+  <title>인포그래픽 모션 · 강 마을 한눈에 보기</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #F4F1EA; }
+    body { display: grid; place-items: center; }
+    svg { display: block; width: min(100vw, 177.777778vh); height: min(100vh, 56.25vw); }
+  </style>
+</head>
+<body>
+  <svg id="stage" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-labelledby="scene-title scene-description">
+    <title id="scene-title">강 마을 한눈에 보기</title>
+    <desc id="scene-description">가상의 마을을 설명하는 5초 인포그래픽. 아치 다리 길이 24미터, 강 폭 18미터, 집 두 채, 나무 일곱 그루. 강조는 다리, 강, 집, 나무 순서로 순환합니다.</desc>
+  </svg>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

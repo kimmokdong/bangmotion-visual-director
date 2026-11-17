@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <title>스타일라이즈드 3D · BangMotion</title>
+  <style>
+    html, body { margin:0; height:100%; overflow:hidden; background:#c8e4df; }
+    body { display:grid; place-items:center; }
+    #stage { width:min(100vw,177.777778vh); height:min(100vh,56.25vw); }
+    canvas { display:block; width:100%; height:100%; }
+  </style>
+  <script type="importmap">{"imports":{"three":"../../vendor/three/build/three.module.min.js","three/addons/":"../../vendor/three/examples/jsm/"}}</script>
+</head>
+<body>
+  <main id="stage" aria-label="아치 다리와 두 집이 있는 밝은 3D 강변 마을, 5초 반복 애니메이션"></main>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

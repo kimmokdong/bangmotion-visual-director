@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>강 마을 · 글래스모피즘</title>
+  <style>
+    :root { font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif; color:#fff7f0; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; overflow:hidden; }
+    body { background:#171629; }
+    #stage { position:absolute; left:50%; top:50%; width:1920px; height:1080px; overflow:hidden; transform-origin:center; isolation:isolate; }
+    canvas { position:absolute; inset:0; width:1920px; height:1080px; }
+    .glass { position:absolute; border:1px solid transparent; border-radius:30px; background:linear-gradient(135deg,rgba(255,255,255,var(--glass-tint-top,.18)),rgba(255,255,255,var(--glass-tint-bottom,.10))); backdrop-filter:blur(32px) saturate(1.65); -webkit-backdrop-filter:blur(32px) saturate(1.65); box-shadow:0 24px 70px rgba(12,10,31,.25),inset 0 1px 0 rgba(255,255,255,.38),inset 1px 0 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(255,255,255,.08); text-shadow:0 2px 12px rgba(15,11,34,.65); }
+    .glass::before { content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1px; background:linear-gradient(135deg,rgba(255,248,238,.76),rgba(255,255,255,.1) 42%,rgba(255,234,217,.08) 66%,rgba(255,255,255,.3)); mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask-composite:exclude; pointer-events:none; }
+    .surface { position:absolute; inset:0; border-radius:inherit; overflow:hidden; pointer-events:none; }
+    .surface::before { content:""; position:absolute; top:0; left:5%; width:90%; height:43%; background:radial-gradient(ellipse at 50% -40%,rgba(255,255,255,.35),transparent 72%); }
+    .sheen { position:absolute; top:-90%; left:-60%; height:280%; width:42%; transform:rotate(25deg); background:linear-gradient(90deg,transparent,rgba(255,249,238,.16),transparent); }
+    .hero { left:112px; top:112px; width:558px; height:334px; padding:34px 38px; }
+    .eyebrow { display:flex; align-items:center; gap:12px; margin:0 0 15px; font-size:22px; font-weight:500; letter-spacing:2px; color:#f7e2e6; }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:#ffdbb2; box-shadow:0 0 12px #ffd6b566; }
+    h1 { position:relative; margin:0; font-size:76px; line-height:1.2; font-weight:600; letter-spacing:-5px; }
+    .description { position:relative; margin:15px 0 25px; font-size:24px; line-height:1.6; letter-spacing:-.6px; color:#fff3f0; }
+    .progress-caption { display:flex; justify-content:space-between; align-items:center; font-size:22px; color:#f6e2e5; }
+    .progress-caption span:last-child { font-variant-numeric:tabular-nums; letter-spacing:1px; }
+    .track { height:3px; margin-top:12px; overflow:hidden; border-radius:4px; background:#ffffff26; }
+    .fill { width:100%; height:100%; background:linear-gradient(90deg,#e7d7e9,#ffe1b8); transform-origin:left; }
+    .bridge-card { left:1458px; top:175px; width:346px; height:170px; padding:28px 30px; }
+    .card-kicker { margin:0 0 18px; color:#f4dfe9; font-size:22px; letter-spacing:1px; }
+    .bridge-row { display:flex; align-items:center; gap:20px; }
+    .bridge-row svg { width:65px; height:42px; fill:none; stroke:#fff0df; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    h2 { margin:0; font-weight:500; font-size:32px; letter-spacing:-1px; }
+    .bridge-row .unit { font-size:26px; font-weight:400; color:#f9e9e0; }
+    .flow-card { left:1432px; top:815px; width:372px; height:172px; padding:25px 28px; }
+    .flow-heading { display:flex; justify-content:space-between; align-items:center; }
+    .flow-heading h2 { font-size:27px; }
+    .flow-heading span { font-size:22px; color:#fae4dd; }
+    .wave { width:100%; height:64px; margin-top:18px; overflow:visible; }
+    .wave line { stroke:#fff5ed26; }
+    .wave path { stroke:#ffe8d3; stroke-width:2; fill:none; stroke-linecap:round; }
+    .chip { position:absolute; display:flex; align-items:center; justify-content:center; gap:12px; width:112px; height:47px; border-radius:24px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.4); box-shadow:0 9px 28px #11102230,inset 0 1px 0 #ffffff26; backdrop-filter:blur(25px) saturate(1.5); -webkit-backdrop-filter:blur(25px) saturate(1.5); font-size:22px; font-weight:500; text-shadow:0 1px 8px #16172c; }
+    .chip i { width:6px; height:6px; border-radius:50%; background:#ffe0ba; }
+    #pointers { position:absolute; inset:0; width:1920px; height:1080px; pointer-events:none; }
+    #pointers path { fill:none; stroke:#ffeadd91; stroke-width:1; }
+    #pointers circle { fill:#fff3da; stroke:#ffffff4d; stroke-width:7; paint-order:stroke; }
+    @media (prefers-reduced-transparency:reduce) { .glass,.chip { background-color:rgba(37,30,60,.6); } }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="황혼의 강 마을 위에 떠 있는 유리 패널. 중앙 아치 다리와 두 집, 여덟 그루의 나무가 있는 5초 반복 풍경">
+    <canvas id="scene" width="1920" height="1080" aria-hidden="true"></canvas>
+    <section class="glass hero" id="hero" aria-labelledby="title">
+      <div class="surface"><div class="sheen"></div></div>
+      <p class="eyebrow"><span class="status-dot"></span>물빛을 따라 걷는 저녁</p>
+      <h1 id="title">강 마을</h1>
+      <p class="description">하루의 빛이 머무는, 작은 강변 산책.</p>
+      <div id="progress" role="progressbar" aria-label="5초 산책 영상" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+        <div class="progress-caption"><span>풍경을 담는 시간</span><span>00:05</span></div>
+        <div class="track"><div class="fill" id="fill"></div></div>
+      </div>
+    </section>
+    <section class="glass bridge-card" id="bridge-card" aria-label="마을을 잇는 다리, 길이 24미터">
+      <div class="surface"><div class="sheen"></div></div>
+      <p class="card-kicker">두 기슭을 잇는 길</p>
+      <div class="bridge-row">
+        <svg viewBox="0 0 72 48" aria-hidden="true"><path d="M3 39V22Q36 4 69 22V39M3 27Q36 9 69 27M17 38Q36 10 55 38M9 19V10M21 14V5M36 11V2M51 14V5M63 19V10"/></svg>
+        <h2>다리 <span class="unit">· 24 m</span></h2>
+      </div>
+    </section>
+    <section class="glass flow-card" id="flow-card" aria-label="부드럽게 움직이는 강 흐름 파형">
+      <div class="surface"><div class="sheen"></div></div>
+      <div class="flow-heading"><h2>강 흐름</h2><span>잔잔하게</span></div>
+      <svg class="wave" viewBox="0 0 316 64" aria-hidden="true"><line x1="0" y1="32" x2="316" y2="32"/><path id="wave"/></svg>
+    </section>
+    <svg id="pointers" aria-hidden="true"><path id="pointer-a"/><path id="pointer-b"/><circle id="point-a" r="3"/><circle id="point-b" r="3"/></svg>
+    <div class="chip" id="chip-a"><i></i>집 A</div>
+    <div class="chip" id="chip-b"><i></i>집 B</div>
+  </main>
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>
