@@ -9,6 +9,16 @@ const { pipeline } = require('node:stream/promises');
 const { randomUUID } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
 
+// PATH에 npm이 없어도(휴대용 Node) 지금 실행 중인 node 옆의 npm으로 설치한다.
+function npmInstall(cwd, extra = [], options = {}) {
+  const dir = path.dirname(process.execPath);
+  const cli = [path.join(dir, 'node_modules', 'npm', 'bin', 'npm-cli.js'), path.join(dir, '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')]
+    .find(p => fsSync.existsSync(p));
+  const args = ['install', '--no-fund', '--no-audit', ...extra];
+  if (cli) return spawnSync(process.execPath, [cli, ...args], { cwd, stdio: 'inherit', ...options });
+  return spawnSync(`npm ${args.join(' ')}`, { cwd, shell: true, stdio: 'inherit', ...options }); // 고정 문자열
+}
+
 const ROOT = path.resolve(__dirname, '..');
 const TEMP = path.join(os.tmpdir(), 'bangmotion-visual-director');
 const SELECTION = path.join(TEMP, 'selection.json');
@@ -27,9 +37,7 @@ function requireDep(name) {
     if (installAttempted || process.env.BMVD_NO_AUTO_INSTALL === '1') break;
     installAttempted = true;
     console.log(`[준비] 필요한 패키지(${name})가 없어 scripts 폴더에서 npm install 을 한 번 실행합니다…`);
-    const npm = spawnSync('npm install --no-fund --no-audit', {
-      cwd: __dirname, shell: true, stdio: 'inherit', timeout: 5 * 60 * 1000,
-    });
+    const npm = npmInstall(__dirname, [], { timeout: 5 * 60 * 1000 });
     if (npm.status !== 0) break;
   }
   throw new Error(`${name} 패키지를 설치하지 못했습니다. 인터넷 연결을 확인한 뒤 다음 명령을 실행해 주세요: cd "${__dirname}" && npm install`);

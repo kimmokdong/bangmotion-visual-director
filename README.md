@@ -10,10 +10,10 @@
 에이전트(Claude Code·Codex·Antigravity)에게 아래 문장을 그대로 붙여 넣으면 됩니다.
 
 ```text
-https://github.com/kimmokdong/bangmotion-visual-director 저장소를 받아서, README의 설치 방법대로 node scripts/install.js 까지 실행해서 스킬을 설치해 줘. 설치가 끝나면 scripts 폴더에 esbuild와 playwright-core가 깔렸는지 확인해 줘.
+https://github.com/kimmokdong/bangmotion-visual-director 저장소를 받아서, README의 설치 방법대로 bootstrap 스크립트로 Node.js를 준비한 다음 install.js 까지 실행해서 스킬을 설치해 줘. 설치가 끝나면 scripts 폴더에 esbuild와 playwright-core가 깔렸는지 확인해 줘.
 ```
 
-직접 하려면 아래 [설치](#설치)의 명령을 실행합니다. 설치 후 에이전트를 새로 엽니다. 폴더만 복사해서 필요한 패키지가 빠졌더라도, 처음 영상을 만들 때 스크립트가 알아서 한 번 설치합니다(인터넷 연결 필요).
+Node.js가 없는 새 PC여도 됩니다. 스크립트가 공식 휴대용 Node를 사용자 폴더에 받아 쓰므로 관리자 권한이나 따로 설치할 프로그램이 없습니다. 직접 하려면 아래 [설치](#설치)의 명령을 실행합니다. 설치 후 에이전트를 새로 엽니다. 폴더만 복사해서 필요한 패키지가 빠졌더라도, 처음 영상을 만들 때 스크립트가 알아서 한 번 설치합니다(인터넷 연결 필요).
 
 **2. 작업 폴더 하나 만들기**
 바탕화면에 `영상 만들기` 같은 폴더를 하나 만들고, 에이전트에서 그 폴더를 엽니다. 영상마다 하위 폴더(`손바느질/`, `물의 순환/` …)는 에이전트가 알아서 만듭니다.
@@ -52,16 +52,25 @@ https://github.com/kimmokdong/bangmotion-visual-director 저장소를 받아서,
 ## 준비물
 
 - Chrome 또는 Edge와 제작 에이전트
-- Node.js 18 이상 (설치·자동 검사·번들)
+- Node.js 18 이상 (설치·자동 검사·번들·갤러리) — 없으면 `scripts/bootstrap.ps1`·`bootstrap.sh`가 휴대용으로 자동 준비
 - ffmpeg (선택, 정확한 음량 믹스 및 고품질 MP4·GIF 출력용, 예: `winget install Gyan.FFmpeg`)
 
 ## 설치
-```bash
-git clone https://github.com/kimmokdong/bangmotion-visual-director.git
-cd bangmotion-visual-director
-node scripts/install.js            # Claude Code·Codex·Antigravity 모두
-node scripts/install.js --codex    # 하나만: --claude / --codex / --antigravity
+저장소를 받은 뒤(`git clone` 또는 GitHub의 **Code → Download ZIP**) 폴더 안에서 실행합니다.
+
+Windows (PowerShell):
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\bootstrap.ps1   # 마지막 줄 NODE=<경로>
+& "<NODE 경로>" scripts\install.js            # Claude Code·Codex·Antigravity 모두 (하나만: --claude / --codex / --antigravity)
 ```
+
+macOS · Linux:
+```bash
+bash scripts/bootstrap.sh                      # 마지막 줄 NODE=<경로>
+"<NODE 경로>" scripts/install.js
+```
+
+`bootstrap`은 Node.js 18 이상이 이미 있으면 그대로 쓰고, 없으면 nodejs.org 공식 휴대용 Node(최신 LTS)를 사용자 폴더(Windows `%LOCALAPPDATA%\bangmotion-visual-director\node`, macOS·Linux `~/.local/share/bangmotion-visual-director/node`)에 받아 체크섬을 확인하고 풉니다. 관리자 권한·설치 마법사·재시작이 필요 없습니다.
 `install.js`는 아래 위치로 복사하고 `scripts/`에서 `npm install`(playwright-core, esbuild)까지 실행합니다.
 
 | 에이전트 | 설치 위치 |

@@ -7,6 +7,16 @@ const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 
+// PATH에 npm이 없어도(휴대용 Node) 지금 실행 중인 node 옆의 npm으로 설치한다.
+function npmInstall(cwd, extra = [], options = {}) {
+  const dir = path.dirname(process.execPath);
+  const cli = [path.join(dir, 'node_modules', 'npm', 'bin', 'npm-cli.js'), path.join(dir, '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')]
+    .find(p => fs.existsSync(p));
+  const args = ['install', '--no-fund', '--no-audit', ...extra];
+  if (cli) return spawnSync(process.execPath, [cli, ...args], { cwd, stdio: 'inherit', ...options });
+  return spawnSync(`npm ${args.join(' ')}`, { cwd, shell: true, stdio: 'inherit', ...options }); // 고정 문자열
+}
+
 const NAME = 'bangmotion-visual-director';
 const SRC = path.resolve(__dirname, '..');
 const TARGETS = {
@@ -28,7 +38,6 @@ for (const key of chosen) {
   // 기존 설치는 node_modules 만 남기고 덮어쓴다(사용자 파일이 섞이지 않는 스킬 전용 폴더).
   fs.cpSync(SRC, dest, { recursive: true, force: true, filter: (p) =>
     !SKIP.has(path.basename(p)) && p !== path.join(SRC, 'preview') && p !== path.join(SRC, 'scripts', 'preview.js') });
-  // 고정 문자열이라 셸로 실행해도 안전하다(Windows 의 npm.cmd 는 셸이 필요).
-  const npm = spawnSync('npm install --silent --no-fund --no-audit', { cwd: path.join(dest, 'scripts'), stdio: 'inherit', shell: true });
+  const npm = npmInstall(path.join(dest, 'scripts'), ['--silent']);
   console.log(`[설치] ${key} → ${dest}${npm.status === 0 ? '' : '  (npm install 실패: scripts/ 에서 직접 실행하세요)'}`);
 }
