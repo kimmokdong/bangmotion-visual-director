@@ -3,8 +3,7 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { fileURLToPath, pathToFileURL } = require('node:url');
-const { build } = require('esbuild');
-const { hasFFmpeg, inside, main, parseArgs, readJSON, runFFmpeg } = require('./lib');
+const { hasFFmpeg, inside, main, parseArgs, readJSON, requireDep, runFFmpeg } = require('./lib');
 const { buildMix, previewTracks } = require('./sound');
 
 const assetTypes = {
@@ -82,6 +81,7 @@ async function bundleAudio(project, external) {
 }
 
 async function run(directory, externalAudio) {
+  const { build } = requireDep('esbuild');
   const project = await fs.realpath(path.resolve(directory));
   const entry = path.join(project, 'index.html');
   let html = await fs.readFile(entry, 'utf8');

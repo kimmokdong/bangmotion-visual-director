@@ -7,7 +7,13 @@
 ## 선생님용 한 장 안내
 
 **1. 처음 한 번 — 설치**
-아래 [설치](#설치)의 명령 한 줄(`node scripts/install.js`)이면 끝납니다. 설치 후 에이전트(Claude Code·Codex·Antigravity)를 새로 엽니다.
+에이전트(Claude Code·Codex·Antigravity)에게 아래 문장을 그대로 붙여 넣으면 됩니다.
+
+```text
+https://github.com/kimmokdong/bangmotion-visual-director 저장소를 받아서, README의 설치 방법대로 node scripts/install.js 까지 실행해서 스킬을 설치해 줘. 설치가 끝나면 scripts 폴더에 esbuild와 playwright-core가 깔렸는지 확인해 줘.
+```
+
+직접 하려면 아래 [설치](#설치)의 명령을 실행합니다. 설치 후 에이전트를 새로 엽니다. 폴더만 복사해서 필요한 패키지가 빠졌더라도, 처음 영상을 만들 때 스크립트가 알아서 한 번 설치합니다(인터넷 연결 필요).
 
 **2. 작업 폴더 하나 만들기**
 바탕화면에 `영상 만들기` 같은 폴더를 하나 만들고, 에이전트에서 그 폴더를 엽니다. 영상마다 하위 폴더(`손바느질/`, `물의 순환/` …)는 에이전트가 알아서 만듭니다.

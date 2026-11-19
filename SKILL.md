@@ -79,12 +79,12 @@ Claude Code, Codex, Antigravity 등 Agent Skills 형식을 읽는 에이전트�
 | `templates/scenes.json` | 장면 버튼과 소리 타이밍에 쓸 장면표 예시 |
 | `templates/sound.json` | 수업·설명 영상용 소리 설계 예시 |
 | `gallery/` | 스타일 선택 화면(서버로 열어야 한다 — 파일 더블클릭으로는 모듈이 안 뜬다) |
-| `scripts/` | serve / validate-demo / create-contact-sheet / capture-previews / sound / bundle-preview / render-demo. 처음 한 번 `scripts/`에서 `npm install` |
+| `scripts/` | serve / validate-demo / create-contact-sheet / capture-previews / sound / bundle-preview / render-demo |
 
 ## 준비물
 
 - **필수** Chrome 또는 Edge와 에이전트. 완성본을 상영할 때는 브라우저만 있으면 된다.
-- **자동 검사·번들** Node.js 18 이상. 설치 스크립트가 `npm install`을 실행한다.
+- **자동 검사·번들** Node.js 18 이상. 필요한 패키지가 없으면 처음 사용할 때 자동으로 설치하며(인터넷 필요), 직접 설치하려면 `scripts/`에서 `npm install`을 실행한다.
 - **선택** ffmpeg는 정확한 음량 믹스와 고품질 MP4를 만들 때 쓴다. ffmpeg가 없어도 HTML에서 소리가 나며, 음량은 대략 맞춘다.
 
 브라우저 캡처가 불가능하면 사용자에게 `?t=초`로 열어 확인해 달라고 요청한다.

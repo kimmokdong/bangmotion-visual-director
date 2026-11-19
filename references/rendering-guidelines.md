@@ -63,4 +63,4 @@ node <스킬>/scripts/render-demo.js --url <프로젝트>/index.html --out <프�
 | `scripts/bundle-preview.js <프로젝트>` | 상영·녹화에 쓰는 단일 파일 `preview.html` 생성 |
 | `scripts/render-demo.js --url … --out …` | MP4 + 썸네일, 소리 설정이 있으면 AAC와 최종 측정 JSON. `--draft`로 공유용 MP4 |
 
-처음 한 번 `scripts/`에서 `npm install`(playwright-core, esbuild). 브라우저는 설치된 Chrome 또는 Edge를 쓴다.
+필요한 패키지(playwright-core, esbuild)가 없으면 처음 사용할 때 자동으로 설치하며(인터넷 필요), 직접 설치하려면 `scripts/`에서 `npm install`을 실행한다. 브라우저는 설치된 Chrome 또는 Edge를 쓴다.

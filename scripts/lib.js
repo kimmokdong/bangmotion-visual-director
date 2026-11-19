@@ -13,6 +13,27 @@ const ROOT = path.resolve(__dirname, '..');
 const TEMP = path.join(os.tmpdir(), 'bangmotion-visual-director');
 const SELECTION = path.join(TEMP, 'selection.json');
 let selectionQueue = Promise.resolve();
+let installAttempted = false;
+
+function requireDep(name) {
+  while (true) {
+    try {
+      return require(name);
+    } catch (error) {
+      if (error.code !== 'MODULE_NOT_FOUND' || error.message.split('\n', 1)[0] !== `Cannot find module '${name}'`) {
+        throw error;
+      }
+    }
+    if (installAttempted || process.env.BMVD_NO_AUTO_INSTALL === '1') break;
+    installAttempted = true;
+    console.log(`[준비] 필요한 패키지(${name})가 없어 scripts 폴더에서 npm install 을 한 번 실행합니다…`);
+    const npm = spawnSync('npm install --no-fund --no-audit', {
+      cwd: __dirname, shell: true, stdio: 'inherit', timeout: 5 * 60 * 1000,
+    });
+    if (npm.status !== 0) break;
+  }
+  throw new Error(`${name} 패키지를 설치하지 못했습니다. 인터넷 연결을 확인한 뒤 다음 명령을 실행해 주세요: cd "${__dirname}" && npm install`);
+}
 
 // Windows에서는 파일을 읽는 중에도 교체가 거부될 수 있어 선택 파일 접근을 직렬화한다.
 function accessSelection(action) {
@@ -27,7 +48,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
   '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 
 async function launchBrowser() {
-  const { chromium } = require('playwright-core');
+  const { chromium } = requireDep('playwright-core');
   const failures = [];
   const base = ['--ignore-gpu-blocklist', '--enable-gpu'];
   const modes = [
@@ -323,5 +344,5 @@ function main(fn) {
   fn().catch(error => { console.error(`[오류] ${error.message}`); process.exitCode = 1; });
 }
 
-module.exports = { ROOT, TEMP, SELECTION, launchBrowser, startServer, listStyles, openDemo, captureAt,
+module.exports = { ROOT, TEMP, SELECTION, requireDep, launchBrowser, startServer, listStyles, openDemo, captureAt,
   hasFFmpeg, runFFmpeg, readJSON, writeJSON, parseArgs, positive, getTargets, serveLocalUrl, sampleTimes, imageMetrics, inside, main };

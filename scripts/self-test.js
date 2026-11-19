@@ -93,6 +93,14 @@ async function run() {
     for (const file of ['lib.js', 'serve.js', 'validate-demo.js', 'create-contact-sheet.js', 'capture-previews.js', 'render-demo.js']) {
       await fs.copyFile(path.join(__dirname, file), path.join(root, 'scripts', file));
     }
+    const missingDep = await childCommand(['-e', `
+      process.env.BMVD_NO_AUTO_INSTALL = '1';
+      require('node:child_process').spawnSync = () => { throw new Error('자동 설치 호출'); };
+      const { main, requireDep } = require(process.argv[1]);
+      main(async () => requireDep('bmvd-self-test-missing-package'));
+    `, path.join(root, 'scripts', 'lib.js')]).done;
+    assert.equal(missingDep.code, 1);
+    assert.equal(missingDep.output.trim(), `[오류] bmvd-self-test-missing-package 패키지를 설치하지 못했습니다. 인터넷 연결을 확인한 뒤 다음 명령을 실행해 주세요: cd "${path.join(root, 'scripts')}" && npm install`);
     await fs.copyFile(path.join(lib.ROOT, 'shared/runtime.js'), path.join(root, 'shared/runtime.js'));
     await fs.copyFile(path.join(lib.ROOT, 'vendor/three/build/three.module.min.js'), path.join(root, 'vendor/three.module.min.js'));
     await fs.writeFile(path.join(root, 'gallery/index.html'), '<!doctype html><meta charset="utf-8">테스트 갤러리');
