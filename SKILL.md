@@ -6,7 +6,7 @@ description: 별칭 "모션그래픽". 수업용·설명용·홍보용 모션그
 # BangMotion Visual Director
 
 그래픽 스타일 도감 + BangMotion 연출기법 + 그래픽 품질 디렉터를 묶은 모션그래픽 제작 스킬.
-결과물은 브라우저에서 실행되는 HTML 애니메이션이고, 필요하면 MP4 와 썸네일로 내보낸다.
+완성본은 소리를 포함한 `preview.html`이다. 브라우저에서 바로 상영하고, 필요하면 영상 파일로 저장한다.
 
 이 문서에서 `<스킬>` 은 이 SKILL.md 가 있는 폴더다. 기존 `bang-motion` 스킬과는 별개이며 그 스킬을 수정하지 않는다.
 
@@ -30,21 +30,17 @@ Claude Code, Codex, Antigravity 등 Agent Skills 형식을 읽는 에이전트�
 스타일을 바꿔도 연출은 유지할 수 있고, 연출을 바꿔도 스타일은 유지된다. 섞어서 말하지 않는다.
 
 ## 실행 순서
-자세한 절차는 `references/production-workflow.md`. 요약:
 
-1. **스타일 결정**
-   - 사용자가 스타일을 지정했다 → 갤러리를 띄우지 않고 그 스타일로 간다(별칭 표: `references/style-catalog.md`).
-   - "알아서 정해 줘" → 주제→스타일 선택표로 1개를 고르고 이유를 한 줄로 알린다.
-   - 언급이 없다 → 갤러리를 연다: `node <스킬>/scripts/serve.js --open --clear` 를 백그라운드로 실행하고, 번호(1~8)를 말하거나 갤러리의 **이 스타일로 선택** 버튼을 누르라고 안내한다. 버튼을 누르면 `<OS 임시폴더>/bangmotion-visual-director/selection.json` 에 기록되고 서버 터미널에 `[선택됨] <id>` 가 찍힌다. 사용자가 "골랐어"라고만 하면 그 파일을 읽는다.
-   - 갤러리 데모는 고정이다. 새 주제에 맞춰 데모를 다시 만들지 않는다.
-2. **스타일 규칙 읽기**: `styles/<id>/style.json`, `styles/<id>/notes.md`. 구현 방식이 필요하면 `styles/<id>/demo.js` 를 본다.
-3. **연출 설계**: `references/bangmotion-directing-library.md` 의 빠른 선택표에서 목적에 맞는 연출기법 1~3개. 스타일과 충돌하는 기법은 뺀다. `templates/` 에서 뼈대를 고른다.
-4. **품질 시트 작성**: `references/graphic-quality-director.md` 에 따라 장면별 Art / Material / Light / Camera / Render 를 정한다. 효과는 스타일에 맞는 것만 켠다(적용표 §6).
-5. **구현**: 프로젝트 폴더에 `index.html` + JS. `shared/runtime.js` 재생 계약(`render(t)` 순수 함수)을 따른다. 데모 장면을 복제하지 말고 미술 규칙과 구현 방식만 재사용한다.
-6. **시각 검증**: `scripts/validate-demo.js` 와 `scripts/create-contact-sheet.js` 로 프레임을 뽑아 **이미지를 직접 열어 보고** 체크리스트로 판정 → 수정 → 재캡처. 코드가 실행된다는 것만으로 통과시키지 않는다.
-7. **출력**: HTML, 요청 시 `scripts/render-demo.js` 로 MP4 + 썸네일. 결과 경로, 쓴 스타일·연출, 고친 문제, 확인 못 한 것을 보고한다.
+자세한 절차는 `references/production-workflow.md`를 따른다.
 
-사용자가 중간 승인을 요구하지 않았다면 2~6 은 묻지 않고 진행한다. 빠진 값은 기본값(15초, 16:9, 30fps)을 쓰고 보고에 적는다.
+1. **요청** — 필요한 질문만 한 메시지에 묶는다. 스타일이 비어 있으면 갤러리를 안내하고, 수업·설명 영상이면 정해지지 않은 설명 방식도 함께 묻는다. 스타일을 지정했거나 선택을 맡겼으면 해당 스타일 또는 추천 스타일로 진행한다. 별도 질문이 필요 없으면 기본값(15초, 16:9, 30fps, 목적별 설명 방식)을 쓴다.
+2. **설계서** — 프로젝트에 장면표, 연출기법, 장면별 품질 시트, 소리 큐 계획을 한 문서로 쓴다. 장면 시간과 fps를 `templates/scenes.json`을 본뜬 `scenes.json`에도 적어 장면 버튼과 소리 타이밍에 쓴다.
+3. **구현 → 자동 검사 + 눈으로 확인** — `index.html`에 구현하고 `validate-demo.js`와 `create-contact-sheet.js`를 실행한다. Contact Sheet를 직접 열어 §7 체크리스트와 **내용 정확성(교과·사실)**을 확인한다.
+4. **소리 1차** — `sound.json`을 작성한다. ffmpeg가 있으면 `sound.js`로 초안 믹스를 만들어 통합 음량·실제 피크·모노를 잰다.
+5. **HTML 초안** — `bundle-preview.js`로 만든 `preview.html` 한 파일을 전달한다. 장면 번호·이름·시간과 조작법을 안내하고, 복사한 시각·프레임을 붙여 말로 수정할 곳을 알려 달라고 한다.
+6. **말로 수정 반복** — 요청받은 장면·시각만 수정하고 확정된 장면은 그대로 둔다. 자동 검사와 해당 시각의 Contact Sheet를 다시 확인한다. 타이밍이 바뀌면 소리 큐를 맞추고, `preview.html`을 재생성해 R로 다시 읽도록 안내한다. 변경 이력은 설계서에 남긴다.
+7. **확정 후: preview.html 로 바로 상영(기본) → 영상 파일이 필요하면 ● 녹화 → 프레임 정확한 고품질이 필요할 때만 render-demo.js MP4**. 고품질 MP4를 만들었으면 통합 음량·실제 피크·모노와 주요 큐 시각의 프레임을 확인한다.
+8. **보고** — 첫 줄에 “preview.html 더블클릭 → ⛶ 상영(F) / ● 영상으로 저장”이라고 적는다. 결과 경로, 스타일·연출기법, 고친 점, 미검증 항목과 기본값을 적는다. 소리가 있으면 측정한 LUFS·실제 피크, 출처·라이선스, 헤드폰으로 확인할 다섯 시각을 적는다.
 
 ## 스타일 도감
 | # | id | 이름 | 한 줄 |
@@ -70,16 +66,25 @@ Claude Code, Codex, Antigravity 등 Agent Skills 형식을 읽는 에이전트�
 ## 파일 안내
 | 경로 | 언제 읽나 |
 |---|---|
-| `references/production-workflow.md` | 요청을 받으면 먼저. 스타일 결정 세 갈래, 갤러리 사용, 수정 요청 처리 |
+| `references/production-workflow.md` | 요청부터 설계, 초안 검토·수정, 상영·영상 저장까지 |
 | `references/style-catalog.md` | 스타일을 고르거나 별칭을 id 로 바꿀 때, 스타일별 연출 궁합 |
 | `references/bangmotion-directing-library.md` | 연출기법을 고를 때(크다 — 빠른 선택표부터 보고 필요한 카드만) |
-| `references/graphic-quality-director.md` | 품질 시트를 쓸 때, 시각 QA 체크리스트 |
-| `references/rendering-guidelines.md` | 재생 계약, 실시간/MP4 설정, 스크립트 사용법 |
+| `references/graphic-quality-director.md` | 품질 시트, 시각 검증과 내용 정확성 체크리스트 |
+| `references/rendering-guidelines.md` | 재생 계약, HTML 초안·MP4 설정, 스크립트 사용법 |
+| `references/sound-guide.md` | 설명 방식, 목적·스타일별 소리, 믹스와 최종 음량 검증 |
+| `sound/` | 번들 CC0 효과음, 추천 목록, 라이선스와 음악 출처 안내 |
 | `styles/CONTRACT.md` | 재생 계약 세부, 새 스타일을 추가할 때 |
 | `styles/<id>/notes.md`, `style.json`, `demo.js` | 선택된 스타일 하나만 |
 | `templates/*.md` | 수업 도입 / 개념 설명 / 시네마틱 인트로 / 인포그래픽 뼈대 |
+| `templates/scenes.json` | 장면 버튼과 소리 타이밍에 쓸 장면표 예시 |
+| `templates/sound.json` | 수업·설명 영상용 소리 설계 예시 |
 | `gallery/` | 스타일 선택 화면(서버로 열어야 한다 — 파일 더블클릭으로는 모듈이 안 뜬다) |
-| `scripts/` | serve / validate-demo / create-contact-sheet / capture-previews / render-demo. 처음 한 번 `scripts/` 에서 `npm install` |
+| `scripts/` | serve / validate-demo / create-contact-sheet / capture-previews / sound / bundle-preview / render-demo. 처음 한 번 `scripts/`에서 `npm install` |
 
 ## 준비물
-Node 18+, 설치된 Chrome 또는 Edge(캡처·검증용), ffmpeg(MP4·GIF 를 만들 때만). 없으면 HTML 결과물까지는 만들 수 있고, 검증은 사용자에게 브라우저에서 `?t=초` 로 열어 확인해 달라고 요청한다.
+
+- **필수** Chrome 또는 Edge와 에이전트. 완성본을 상영할 때는 브라우저만 있으면 된다.
+- **자동 검사·번들** Node.js 18 이상. 설치 스크립트가 `npm install`을 실행한다.
+- **선택** ffmpeg는 정확한 음량 믹스와 고품질 MP4를 만들 때 쓴다. ffmpeg가 없어도 HTML에서 소리가 나며, 음량은 대략 맞춘다.
+
+브라우저 캡처가 불가능하면 사용자에게 `?t=초`로 열어 확인해 달라고 요청한다.

@@ -5,9 +5,9 @@ const path = require('node:path');
 const fsSync = require('node:fs');
 const os = require('node:os');
 const http = require('node:http');
+const { pipeline } = require('node:stream/promises');
 const { randomUUID } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
-const { chromium } = require('playwright-core');
 
 const ROOT = path.resolve(__dirname, '..');
 const TEMP = path.join(os.tmpdir(), 'bangmotion-visual-director');
@@ -24,9 +24,10 @@ function accessSelection(action) {
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.gif': 'image/gif',
-  '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
+  '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.woff2': 'font/woff2', '.ico': 'image/x-icon' };
 
 async function launchBrowser() {
+  const { chromium } = require('playwright-core');
   const failures = [];
   const base = ['--ignore-gpu-blocklist', '--enable-gpu'];
   const modes = [
@@ -147,9 +148,26 @@ async function startServer(rootDir = ROOT, { port = 0, clear = false } = {}) {
       if (!inside(root, file)) return json(403, { error: '루트 밖 링크 금지' });
       if ((await fs.stat(file)).isDirectory()) file = await fs.realpath(path.join(file, 'index.html'));
       if (!inside(root, file)) return json(403, { error: '루트 밖 링크 금지' });
+      const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
+      if (type === 'audio/wav') {
+        // 브라우저가 WAV 탐색과 루프에 필요한 구간만 다시 요청할 수 있게 한다.
+        const { size } = await fs.stat(file);
+        const range = req.headers.range?.match(/^bytes=(\d*)-(\d*)$/);
+        const partial = range && (range[1] || range[2]);
+        const start = partial ? (range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]))) : 0;
+        const end = partial && range[1] && range[2] ? Math.min(size - 1, Number(range[2])) : size - 1;
+        res.setHeader('Accept-Ranges', 'bytes');
+        if (partial && (start >= size || end < start)) {
+          res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+          return res.end();
+        }
+        if (partial) res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+        res.writeHead(partial ? 206 : 200, { 'Content-Type': type, 'Content-Length': end - start + 1 });
+        if (req.method === 'HEAD' || !size) return res.end();
+        return await pipeline(fsSync.createReadStream(file, { start, end }), res);
+      }
       const content = await fs.readFile(file);
-      res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-        'Content-Length': content.length });
+      res.writeHead(200, { 'Content-Type': type, 'Content-Length': content.length });
       res.end(req.method === 'HEAD' ? undefined : content);
     } catch (error) {
       if (res.headersSent) { res.end(); return; }
@@ -182,6 +200,7 @@ async function startServer(rootDir = ROOT, { port = 0, clear = false } = {}) {
 }
 
 async function openDemo(page, url) {
+  await page.addInitScript(() => { window.__bmvdCapture = true; });
   const response = await page.goto(url, { waitUntil: 'load', timeout: 30000 });
   if (response && !response.ok()) throw new Error(`페이지 로드 실패: HTTP ${response.status()}`);
   await page.waitForFunction(() => window.__demoReady === true, null, { timeout: 30000 });
@@ -203,15 +222,19 @@ async function captureAt(page, t, scale = 'css') {
 
 function hasFFmpeg() { return spawnSync('ffmpeg', ['-version'], { stdio: 'ignore', windowsHide: true }).status === 0; }
 
-function runFFmpeg(args) {
+function runFFmpeg(args, { loglevel = 'error' } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args], { windowsHide: true });
-    let errors = '';
-    child.stderr.on('data', chunk => { errors = (errors + chunk).slice(-12000); });
+    const child = spawn('ffmpeg', ['-hide_banner', '-loglevel', loglevel, '-y', ...args], { windowsHide: true });
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', chunk => { stderr = (stderr + chunk).slice(-12000); });
     child.on('error', reject);
-    child.on('close', code => code === 0 ? resolve() : reject(new Error(`ffmpeg 실패 (${code}): ${errors}`)));
+    child.on('close', code => code === 0 ? resolve(stderr) : reject(new Error(`ffmpeg 실패 (${code}): ${stderr}`)));
   });
 }
+
+async function readJSON(file) { return JSON.parse((await fs.readFile(file, 'utf8')).replace(/^\uFEFF/, '')); }
+async function writeJSON(file, value) { await fs.writeFile(file, JSON.stringify(value, null, 2) + '\n', 'utf8'); }
 
 function parseArgs(argv, { values = [], flags = [] } = {}) {
   const options = { ids: [] };
@@ -301,4 +324,4 @@ function main(fn) {
 }
 
 module.exports = { ROOT, TEMP, SELECTION, launchBrowser, startServer, listStyles, openDemo, captureAt,
-  hasFFmpeg, runFFmpeg, parseArgs, positive, getTargets, serveLocalUrl, sampleTimes, imageMetrics, inside, main };
+  hasFFmpeg, runFFmpeg, readJSON, writeJSON, parseArgs, positive, getTargets, serveLocalUrl, sampleTimes, imageMetrics, inside, main };

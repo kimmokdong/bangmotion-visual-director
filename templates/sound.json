@@ -1,0 +1,29 @@
+{
+  "$comment": "수업·설명 영상 예시. music.file은 프로젝트에 둔 실제 곡으로 바꾸고 출처·라이선스를 기입한다. 배경음악을 빼려면 music을 null로 둔다.",
+  "mode": "music-sfx",
+  "duration": 12,
+  "target": { "lufs": -16, "truePeak": -4 },
+  "music": {
+    "file": "sound/music.mp3",
+    "title": "곡 제목",
+    "artist": "작곡가",
+    "source": "곡의 원본 페이지 URL",
+    "license": "원본에서 확인한 라이선스",
+    "credit": "공개 시 표시할 문구",
+    "gain": -18,
+    "offset": 0,
+    "start": 0,
+    "fadeIn": 0.6,
+    "fadeOut": 1.5
+  },
+  "ambience": [
+    { "file": "sfx:ambience/fs-329533-room-tone-in-an-apartment-livi.ogg", "start": 0, "end": 12, "gain": -24, "fade": 0.8 }
+  ],
+  "cues": [
+    { "t": 1.2, "type": "appear", "sound": "sfx:kit/pop.ogg", "gain": -8, "desc": "첫 단계 라벨 등장", "layer": "style" },
+    { "t": 4.0, "type": "movement", "sound": "sfx:kit/whoosh.ogg", "gain": -12, "desc": "다음 단계로 카메라 이동", "layer": "style", "dur": 0.5 },
+    { "t": 7.4, "type": "ding", "sound": "sfx:ding/kenney-interface-confirmation-001.ogg", "gain": -8, "desc": "실험 도구의 완료 알림", "layer": "content" }
+  ],
+  "$comment_voice": "내레이션을 고르면 mode를 narration으로 바꾸고 voice에 {t: 0.5, text: 대본, speaker: 화자, file: 프로젝트 안의 녹음 경로, gain: 0, source: 출처, license: 라이선스} 형태로 추가한다.",
+  "voice": []
+}

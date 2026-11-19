@@ -1,0 +1,9 @@
+{
+  "fps": 30,
+  "aspect": "16:9",
+  "scenes": [
+    { "id": "intro", "label": "도입", "start": 0, "end": 4 },
+    { "id": "explain", "label": "과정 설명", "start": 4, "end": 10 },
+    { "id": "summary", "label": "정리", "start": 10, "end": 15 }
+  ]
+}

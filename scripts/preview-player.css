@@ -1,0 +1,104 @@
+body:has(> #bmvd-shell) {
+  display: block !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+#bmvd-shell {
+  position: relative;
+  display: grid;
+  grid-template: minmax(0, 1fr) auto / minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+}
+#bmvd-viewport {
+  display: grid;
+  place-items: center;
+  container-type: size;
+  min-height: 0;
+  overflow: hidden;
+}
+#bmvd-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100cqw, calc(100cqh * var(--bmvd-aspect)));
+  aspect-ratio: var(--bmvd-aspect);
+  container-type: size;
+  contain: layout paint;
+  overflow: hidden;
+}
+html[data-bmvd-presenting] #bmvd-controls { display: none; }
+html[data-bmvd-presenting] #bmvd-viewport { background: #000; }
+html[data-bmvd-presenting] #bmvd-stage { background-color: var(--bmvd-stage-background); }
+html[data-bmvd-presenting]:not([data-bmvd-cursor]),
+html[data-bmvd-presenting]:not([data-bmvd-cursor]) #bmvd-shell * { cursor: none !important; }
+#bmvd-controls {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 45dvh;
+  padding: 8px max(16px, calc((100% - 1140px) / 2)) 10px;
+  overflow: auto;
+  border-top: 1px solid #3a4057;
+  background: #1d2032;
+  color: #eef0fa;
+  color-scheme: dark;
+  font: 500 14px/1.4 "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+#bmvd-controls [hidden] { display: none !important; }
+#bmvd-controls .bmvd-timeline, #bmvd-controls .bmvd-actions, #bmvd-scenes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#bmvd-controls .bmvd-actions, #bmvd-scenes { flex-wrap: wrap; }
+#bmvd-controls .bmvd-track { position: relative; flex: 1; min-width: 0; height: 28px; }
+#bmvd-segments {
+  position: absolute;
+  inset: 9px 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #3a4057;
+}
+#bmvd-segments span { position: absolute; height: 100%; background: #6874b0; box-shadow: inset -2px 0 #1d2032; }
+#bmvd-segments span:nth-child(even) { background: #917dad; }
+#bmvd-range { position: absolute; inset: 0; width: 100%; margin: 0; appearance: none; background: transparent; cursor: pointer; }
+#bmvd-range::-webkit-slider-thumb { appearance: none; width: 14px; height: 20px; border-radius: 4px; background: #e1daff; }
+#bmvd-range::-moz-range-thumb { width: 14px; height: 20px; border: 0; border-radius: 4px; background: #e1daff; }
+#bmvd-time { min-width: 128px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#bmvd-controls button, #bmvd-speed {
+  min-height: 34px;
+  padding: 4px 10px;
+  border: 1px solid #565e7e;
+  border-radius: 7px;
+  background: #2b3048;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+#bmvd-controls button:hover, #bmvd-speed:hover { background: #3a405c; }
+#bmvd-controls :focus-visible { outline: 2px solid #e1daff; outline-offset: 2px; }
+#bmvd-controls button:disabled { opacity: .55; cursor: default; }
+#bmvd-controls #bmvd-play { min-width: 76px; background: #dcdaff; color: #1d2032; }
+#bmvd-controls #bmvd-record { color: #ffd0d6; }
+#bmvd-controls label { display: inline-flex; gap: 4px; align-items: center; }
+#bmvd-copy { margin-left: auto; }
+#bmvd-scenes:not(:empty) { margin-top: 7px; }
+#bmvd-scenes button[aria-current="true"] { border-color: #c9bbff; background: #47416d; }
+#bmvd-note { margin: 7px 0 0; color: #cecee2; }
+#bmvd-controls textarea { position: fixed; top: 0; left: -10000px; }
+#bmvd-toast:not(:empty) {
+  position: absolute;
+  top: 4px;
+  inset-inline: 8px;
+  width: fit-content;
+  max-width: calc(100% - 40px);
+  margin-inline: auto;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: #e1daff;
+  color: #15162a;
+  pointer-events: none;
+}
