@@ -2,14 +2,14 @@ import { start, DURATION, TAU } from '../../shared/runtime.js';
 
 const PALETTE = Object.freeze({
   cream: '#eee2c6', mustard: '#d2a347', brick: '#ad5945',
-  olive: '#7e8a59', teal: '#508b89', navy: '#344f5c', kraft: '#b99a70',
+  olive: '#7e8a59', teal: '#508b89', navy: '#355b77', kraft: '#b99a70',
 });
 const MATERIAL = Object.freeze({
-  seed: 52173, tile: 384, cacheScale: 1.5, edge: '#fbefd9', jitter: 1.3,
+  seed: 52173, tile: 384, cacheScale: 1.5, edge: '#fff3dc', jitter: 1.3,
   waterPapers: ['#79aaa2', '#436f72', '#91b8ac'],
 });
-const LIGHTING = Object.freeze({ color: '#403b2a', opacity: 0.27, x: 0.63, y: 0.96 });
-const CAMERA = Object.freeze({ width: 1920, height: 1080, travelX: 13, travelY: 5, zoom: 0.006 });
+const LIGHTING = Object.freeze({ color: '#3a2e22', opacity: 0.5, x: 1.15, y: 1.55 });
+const CAMERA = Object.freeze({ width: 1920, height: 1080, travelX: 22, travelY: 7, zoom: 0.004 });
 const RENDERING = Object.freeze({ maxDpr: 2, fps: 12 });
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d', { alpha: false });
@@ -40,86 +40,170 @@ function bezier(a, b, c, d, count = 24) {
 }
 function cut(points, jitter = MATERIAL.jitter) {
   const path = new Path2D();
+  const phase = range(0, TAU);
+  let distance = 0;
   points.forEach((p, i) => {
     const prev = points[(i + points.length - 1) % points.length];
-    const steps = Math.max(1, Math.ceil(Math.hypot(p[0] - prev[0], p[1] - prev[1]) / 34));
+    const length = Math.hypot(p[0] - prev[0], p[1] - prev[1]);
+    const steps = Math.max(1, Math.ceil(length / 3));
     for (let j = 1; j <= steps; j++) {
-      const x = prev[0] + (p[0] - prev[0]) * j / steps + range(-jitter, jitter);
-      const y = prev[1] + (p[1] - prev[1]) * j / steps + range(-jitter, jitter);
+      const d = distance + length * j / steps;
+      const offset = jitter * (Math.sin(d / 23 + phase) * 0.8 + Math.sin(d / 9 + phase * 2) * 0.35 + range(-0.35, 0.35));
+      const x = prev[0] + (p[0] - prev[0]) * j / steps - (p[1] - prev[1]) / (length || 1) * offset;
+      const y = prev[1] + (p[1] - prev[1]) * j / steps + (p[0] - prev[0]) / (length || 1) * offset;
       if (i === 0 && j === 1) path.moveTo(x, y); else path.lineTo(x, y);
     }
+    distance += length;
   });
   path.closePath();
   return path;
 }
 
-function createPaperTexture() {
+function createPaperTexture(kind) {
   const tile = document.createElement('canvas');
   tile.width = tile.height = MATERIAL.tile;
   const g = tile.getContext('2d');
   for (let i = 0; i < 21000; i++) {
     const x = range(0, tile.width), y = range(0, tile.height);
-    g.fillStyle = i % 3 ? 'rgba(55,40,20,0.045)' : 'rgba(255,251,229,0.15)';
+    g.fillStyle = i % 3 ? `rgba(55,40,20,${kind === 'kraft' ? 0.15 : 0.075})` : 'rgba(255,251,229,0.23)';
     g.fillRect(x, y, range(0.4, 1.8), range(0.4, 1.5));
   }
-  for (let i = 0; i < 1200; i++) {
+  for (let i = 0; i < 2100; i++) {
     const x = range(0, tile.width), y = range(0, tile.height);
-    g.strokeStyle = i % 2 ? 'rgba(73,56,30,0.055)' : 'rgba(255,247,223,0.17)';
-    g.lineWidth = range(0.3, 0.8);
-    g.beginPath(); g.moveTo(x, y); g.lineTo(x + range(2, 13), y + range(-2, 2)); g.stroke();
+    g.strokeStyle = i % 2 ? `rgba(73,56,30,${kind === 'kraft' ? 0.27 : 0.13})` : 'rgba(255,247,223,0.29)';
+    g.lineWidth = range(0.35, kind === 'kraft' ? 1.15 : 0.85);
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 6, y - 2, x + range(3, 19), y + range(-5, 5)); g.stroke();
   }
   for (let i = 0; i < 130; i++) {
     g.fillStyle = 'rgba(82,63,35,0.025)';
     g.beginPath(); g.ellipse(range(0, 384), range(0, 384), range(3, 15), range(1, 5), range(0, TAU), 0, TAU); g.fill();
   }
+  if (kind === 'kraft') {
+    for (let i = 0; i < 330; i++) {
+      g.fillStyle = 'rgba(65,42,23,0.24)';
+      g.fillRect(range(0, 384), range(0, 384), range(0.8, 2.5), range(1, 4));
+    }
+  }
+  if (kind === 'corrugated') {
+    for (let x = 0; x < 384; x += 12) {
+      const ridge = g.createLinearGradient(x, 0, x + 12, 0);
+      ridge.addColorStop(0, 'rgba(64,43,23,0.21)'); ridge.addColorStop(0.38, 'rgba(255,243,207,0.19)');
+      ridge.addColorStop(1, 'rgba(64,43,23,0.21)');
+      g.fillStyle = ridge; g.fillRect(x, 0, 12, 384);
+    }
+  }
   return tile;
 }
-const texture = createPaperTexture();
+const textures = Object.fromEntries(['color', 'kraft', 'corrugated'].map(kind => [kind, createPaperTexture(kind)]));
 
-function paper(points, color, depth = 3, jitter = MATERIAL.jitter) {
+function cachedCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(w * MATERIAL.cacheScale); c.height = Math.ceil(h * MATERIAL.cacheScale);
+  return c;
+}
+function shadowCache(face, depth) {
+  const shadow = cachedCanvas(face.width / MATERIAL.cacheScale, face.height / MATERIAL.cacheScale);
+  const s = shadow.getContext('2d'), scale = MATERIAL.cacheScale;
+  // 넓은 그림자와 짙은 접촉 코어를 미리 구워 재생 중 블러를 피한다.
+  for (const [blur, distance, opacity] of [[3 + depth * 1.65, depth, LIGHTING.opacity], [0.8 + depth * 0.23, Math.max(0.6, depth * 0.25), 0.49]]) {
+    s.shadowColor = LIGHTING.color; s.shadowBlur = blur * scale;
+    s.shadowOffsetX = distance * LIGHTING.x * scale; s.shadowOffsetY = distance * LIGHTING.y * scale;
+    s.globalAlpha = opacity; s.drawImage(face, 0, 0);
+  }
+  s.globalAlpha = 1; s.globalCompositeOperation = 'destination-out'; s.drawImage(face, 0, 0);
+  return shadow;
+}
+
+function paper(points, color, depth = 3, jitter = MATERIAL.jitter, material = color === PALETTE.kraft ? 'kraft' : 'color', border = 0) {
   const path = cut(points, jitter);
   const xs = points.map(p => p[0]), ys = points.map(p => p[1]);
-  const pad = Math.ceil(12 + depth * 4);
+  const pad = Math.ceil(22 + depth * 7 + border);
   const x = Math.floor(Math.min(...xs)) - pad, y = Math.floor(Math.min(...ys)) - pad;
   const w = Math.ceil(Math.max(...xs)) - x + pad, h = Math.ceil(Math.max(...ys)) - y + pad;
+  const large = (w - pad * 2) * (h - pad * 2) > 120000;
   const scale = MATERIAL.cacheScale;
-  const face = document.createElement('canvas');
-  face.width = Math.ceil(w * scale); face.height = Math.ceil(h * scale);
+  const face = cachedCanvas(w, h);
   const f = face.getContext('2d');
   f.scale(scale, scale); f.translate(-x, -y);
+  if (border) {
+    f.strokeStyle = MATERIAL.edge; f.lineJoin = 'round'; f.lineWidth = border * 2;
+    f.stroke(path);
+  }
   f.save(); f.clip(path); f.fillStyle = color; f.fillRect(x, y, w, h);
   f.fillStyle = random() > 0.5 ? `rgba(255,245,220,${range(0.01, 0.065)})` : `rgba(34,37,27,${range(0.01, 0.055)})`;
   f.fillRect(x, y, w, h);
   f.translate(range(-384, 0), range(-384, 0));
-  f.fillStyle = f.createPattern(texture, 'repeat'); f.fillRect(x, y, w + 384, h + 384); f.restore();
-  f.save(); f.clip(path); f.strokeStyle = MATERIAL.edge; f.globalAlpha = 0.62;
-  f.lineWidth = 1.45; f.translate(-0.2, -0.45); f.stroke(path); f.restore();
-  const shadow = document.createElement('canvas');
-  shadow.width = face.width; shadow.height = face.height;
-  const s = shadow.getContext('2d');
-  s.scale(scale, scale); s.translate(-x, -y);
-  s.shadowColor = LIGHTING.color;
-  s.shadowBlur = (depth < 3 ? 1.3 : 2 + depth * 0.75) * scale;
-  s.shadowOffsetX = (1.1 + depth * LIGHTING.x) * scale;
-  s.shadowOffsetY = (1.5 + depth * LIGHTING.y) * scale;
-  s.globalAlpha = LIGHTING.opacity + (depth < 3 ? 0.13 : 0);
-  s.fillStyle = LIGHTING.color; s.fill(path);
-  return { face, shadow, x, y, w, h, depth };
+  f.fillStyle = f.createPattern(textures[material], 'repeat'); f.fillRect(x, y, w + 384, h + 384); f.restore();
+  // 윤곽의 안쪽에서 반대 방향으로 옮긴 선만 남겨 단면의 방향을 구분한다.
+  const edge = [1, 3, 5].map(i => parseInt(MATERIAL.edge.slice(i, i + 2), 16)).join(',');
+  for (const [dx, dy, ink] of [[1, 1.3, `rgba(${edge},${large ? 0.35 : 0.75})`], [-1.2, -1.5, `rgba(54,43,31,${large ? 0.25 : 0.45})`]]) {
+    f.save(); f.clip(path); f.strokeStyle = ink; f.lineWidth = large ? 1.2 : 1.7;
+    f.translate(dx, dy); f.stroke(path); f.restore();
+  }
+  return { face, shadow: shadowCache(face, depth), x, y, w, h, depth };
 }
 function drawPaper(p, cameraShift = 0) {
-  ctx.drawImage(p.shadow, p.x + cameraShift * p.depth * 0.075, p.y, p.w, p.h);
+  if (p.shadow) ctx.drawImage(p.shadow, p.x + cameraShift * p.depth * 0.11, p.y + cameraShift * p.depth * 0.07, p.w, p.h);
   ctx.drawImage(p.face, p.x, p.y, p.w, p.h);
 }
 function layer(depth) {
   const l = { depth, items: [] }; layers.push(l); return l;
 }
-function add(l, points, color, depth = 3, jitter) {
-  const p = paper(points, color, depth, jitter); l.items.push(p); return p;
+function add(l, points, color, depth = 3, jitter, material, border) {
+  const p = paper(points, color, depth, jitter, material, border); l.items.push(p); return p;
+}
+function sticker(parts, border, depth) {
+  const x = Math.min(...parts.map(p => p.x)), y = Math.min(...parts.map(p => p.y));
+  const w = Math.max(...parts.map(p => p.x + p.w)) - x, h = Math.max(...parts.map(p => p.y + p.h)) - y;
+  const mask = cachedCanvas(w, h), face = cachedCanvas(w, h), scale = MATERIAL.cacheScale;
+  const m = mask.getContext('2d'), f = face.getContext('2d');
+  m.scale(scale, scale); parts.forEach(p => m.drawImage(p.face, p.x - x, p.y - y, p.w, p.h));
+  for (let i = 0; i < 24; i++) {
+    const angle = i / 24 * TAU, radius = border + range(-0.5, 0.5);
+    f.drawImage(mask, Math.cos(angle) * radius * scale, Math.sin(angle) * radius * scale);
+  }
+  f.globalCompositeOperation = 'source-in'; f.fillStyle = MATERIAL.edge; f.fillRect(0, 0, face.width, face.height);
+  f.globalCompositeOperation = 'source-atop';
+  f.fillStyle = f.createPattern(textures.color, 'repeat'); f.fillRect(0, 0, face.width, face.height);
+  return { face, shadow: shadowCache(face, depth), x, y, w, h, depth };
 }
 function group(l, x, y, scale, build, motion = null) {
   const parts = [];
   build((points, color, depth = 2, jitter) => parts.push(paper(points, color, depth, jitter)));
-  l.items.push({ parts, x, y, scale, motion });
+  l.items.push({ parts, backing: sticker(parts, 5.5 / scale, motion?.kind === 'cloud' ? 12 : 6), x, y, scale, motion });
+}
+function contact(l, x, y, rx, ry) {
+  const w = rx * 2 + 16, h = ry * 2 + 16, face = cachedCanvas(w, h);
+  const f = face.getContext('2d'); f.scale(MATERIAL.cacheScale, MATERIAL.cacheScale);
+  f.translate(w / 2, h / 2); f.scale(rx, ry);
+  const shade = f.createRadialGradient(0, 0, 0, 0, 0, 1);
+  shade.addColorStop(0, 'rgba(58,46,34,0.58)'); shade.addColorStop(0.42, 'rgba(58,46,34,0.32)');
+  shade.addColorStop(1, 'rgba(58,46,34,0)');
+  f.fillStyle = shade; f.fillRect(-1, -1, 2, 2);
+  l.items.push({ face, x: x - w / 2, y: y - h / 2, w, h, depth: 0 });
+}
+function cottonPuff(size) {
+  const w = size * 4, face = cachedCanvas(w, w), f = face.getContext('2d');
+  f.scale(MATERIAL.cacheScale, MATERIAL.cacheScale); f.translate(w / 2, w / 2);
+  for (let i = 0; i < 85; i++) {
+    const a = range(0, TAU), radius = range(0, size * 0.83), r = range(3, size * 0.64);
+    const x = Math.cos(a) * radius, y = Math.sin(a) * radius;
+    const fluff = f.createRadialGradient(x - 1, y - 2, 0, x, y, r);
+    fluff.addColorStop(0, 'rgba(255,253,245,0.55)'); fluff.addColorStop(0.5, 'rgba(250,247,237,0.28)');
+    fluff.addColorStop(1, 'rgba(250,247,237,0)');
+    f.fillStyle = fluff; f.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 360; i++) {
+    const a = range(0, TAU), radius = range(0, size * 1.02), x = Math.cos(a) * radius, y = Math.sin(a) * radius;
+    f.strokeStyle = 'rgba(255,254,247,0.34)'; f.lineWidth = range(0.25, 0.6);
+    f.beginPath(); f.moveTo(x, y); f.quadraticCurveTo(x + 3, y - 3, x + range(2, 6), y + range(-3, 3)); f.stroke();
+  }
+  const shadow = cachedCanvas(w, w), s = shadow.getContext('2d');
+  s.shadowColor = 'rgba(58,46,34,0.16)'; s.shadowBlur = 3 * MATERIAL.cacheScale;
+  s.shadowOffsetX = 2 * MATERIAL.cacheScale; s.shadowOffsetY = 3 * MATERIAL.cacheScale;
+  s.drawImage(face, 0, 0);
+  s.globalCompositeOperation = 'destination-out'; s.drawImage(face, 0, 0);
+  return { face, shadow, x: -w / 2, y: -w / 2, w, h: w, depth: 0 };
 }
 function grass(l, x, y, size, color = PALETTE.olive) {
   add(l, [[x - size, y], [x - size * 0.9, y - size * 0.65], [x - 3, y - 3],
@@ -137,9 +221,12 @@ function stone(l, x, y, size) {
 
 const sky = layer(0.1);
 add(sky, rect(47, 42, 1826, 998), PALETTE.cream, 2, 2.2);
+const ridge = layer(0.2);
+add(ridge, [[0, 514], ...bezier([0, 440], [260, 220], [465, 196], [729, 391]),
+  ...bezier([729, 391], [1110, 213], [1500, 228], [1920, 443]), [1920, 700], [0, 700]], PALETTE.kraft, 4, 1.5, 'corrugated');
 const sun = layer(0.22);
-add(sun, ellipse(1422, 195, 80, 79, 37), PALETTE.mustard, 7, 1.2);
-add(sun, ellipse(1404, 177, 54, 54, 32), PALETTE.mustard, 1, 0.7);
+add(sun, ellipse(1422, 195, 80, 79, 37), PALETTE.mustard, 7, 1.2, 'color', 6);
+add(sun, ellipse(1416, 189, 54, 54, 32), '#dfb65f', 1, 0.7);
 for (let i = 0; i < 11; i++) {
   const a = i * TAU / 11;
   const x = 1422 + Math.cos(a) * 109, y = 195 + Math.sin(a) * 109;
@@ -178,12 +265,12 @@ add(water, riverOutline, PALETTE.navy, 3);
 add(water, riverOutline.map(([x, y]) => [x + (x > 1050 ? -11 : 5), y - 8]), PALETTE.teal, 2);
 const waterClip = new Path2D();
 riverOutline.forEach(([x, y], i) => i ? waterClip.lineTo(x, y) : waterClip.moveTo(x, y)); waterClip.closePath();
-const ribbons = [0, 1, 2].map(i => {
+const ribbons = [0, 1, 2].map(i => [0, 1, 2].map(variant => {
   const y = 610 + i * 175;
   const crest = bezier([680, y], [970, y - 35], [1230, y + 120], [1770, y + 76], 88)
-    .map(([x, yy], j) => [x, yy + Math.sin(j / 88 * TAU * 7 + i) * 4]);
+    .map(([x, yy], j) => [x, yy + Math.sin(j / 88 * TAU * 7 + i + variant * TAU / 3) * (4 + variant)]);
   return paper([...crest, ...crest.toReversed().map(([x, yy]) => [x, yy + 16 + i * 3])], MATERIAL.waterPapers[i], 2, 0.7);
-});
+}));
 water.items.push({ kind: 'water', ribbons });
 for (let i = 0; i < 15; i++) {
   const y = 543 + i * 35, center = 785 + (y - 543) * 0.76;
@@ -213,7 +300,7 @@ for (let i = 0; i < 9; i++) {
 }
 
 function tree(l, x, y, size, pine, phase) {
-  add(l, ellipse(x + 5, y + 1, size * 0.35, size * 0.055, 20), PALETTE.navy, 1, 0.4);
+  contact(l, x + 5, y + 2, size * 0.32, size * 0.052);
   group(l, x, y, size / 180, put => {
     put([[-10, 0], [-8, -155], [3, -167], [11, 0]], PALETTE.kraft, 3);
     if (pine) {
@@ -241,7 +328,7 @@ tree(rearTrees, 1248, 487, 112, false, 0.5);
 tree(rearTrees, 1614, 516, 124, true, 0.7);
 
 function house(l, x, y, scale, roof, smoke = false) {
-  add(l, ellipse(x + 19, y + 4, 116 * scale, 13 * scale, 24), PALETTE.navy, 1, 0.4);
+  contact(l, x + 9, y + 6, 116 * scale, 13 * scale);
   group(l, x, y, scale, put => {
     put(rect(-96, -145, 190, 146), PALETTE.cream, 4);
     put([[55, -145], [94, -145], [94, 0], [55, 0]], PALETTE.kraft, 2);
@@ -271,13 +358,13 @@ function house(l, x, y, scale, roof, smoke = false) {
     put(ellipse(-2, -168, 7, 8, 12), PALETTE.navy, 1, 0.3);
   });
   if (smoke) {
-    const puffs = Array.from({ length: 5 }, (_, i) => paper(ellipse(0, 0, 13 + i * 1.7, 12 + i * 1.6, 17), PALETTE.cream, 6, 0.8));
+    const puffs = Array.from({ length: 5 }, (_, i) => cottonPuff(14 + i * 1.5));
     l.items.push({ kind: 'smoke', x: x - 53 * scale, y: y - 247 * scale, scale, puffs });
   }
 }
 const houses = layer(1.13);
 house(houses, 439, 619, 0.98, PALETTE.brick, true);
-house(houses, 1481, 623, 0.83, PALETTE.navy);
+house(houses, 1481, 623, 0.83, '#426f93');
 const garden = layer(1.15);
 [[339, 630, 27], [543, 629, 33], [1393, 635, 23], [1572, 637, 29]].forEach(([x, y, r]) => shrub(garden, x, y, r, PALETTE.teal));
 function fence(l, x, y, count, step) {
@@ -296,9 +383,11 @@ tree(middleTrees, 1688, 736, 173, false, 0.4);
 tree(middleTrees, 575, 779, 132, true, 0.8);
 
 const bridge = layer(1.3);
+contact(bridge, 758, 763, 71, 14);
+contact(bridge, 1230, 763, 67, 14);
 const deckTop = bezier([709, 624], [862, 543], [1119, 541], [1274, 623], 40);
 const underArch = bezier([1169, 775], [1166, 625], [830, 625], [825, 775], 36);
-add(bridge, [[696, 775], [709, 624], ...deckTop, [1293, 775], [1169, 775], ...underArch, [696, 775]], PALETTE.kraft, 8);
+add(bridge, [[696, 775], [709, 624], ...deckTop, [1293, 775], [1169, 775], ...underArch, [696, 775]], PALETTE.kraft, 8, 1.3, 'corrugated', 6);
 add(bridge, [[704, 757], [718, 619], ...deckTop.map(([x, y]) => [x, y - 3]), [1282, 757], [1179, 757],
   ...bezier([1179, 757], [1167, 610], [827, 610], [817, 757], 36)], PALETTE.cream, 4);
 add(bridge, [...deckTop.map(([x, y]) => [x, y + 8]), ...deckTop.toReversed().map(([x, y]) => [x, y + 22])], PALETTE.mustard, 2, 0.5);
@@ -333,7 +422,7 @@ grassSites.forEach(([x, y], i) => {
     add(details, ellipse(x + 19, y - 32, 5, 6, 9), PALETTE.brick, 2, 0.4);
   }
 });
-[[108, 841, 49], [449, 849, 43], [1373, 796, 31], [1830, 783, 50], [681, 1025, 43]].forEach(([x, y, r], i) => shrub(details, x, y, r, i % 2 ? PALETTE.teal : PALETTE.olive));
+[[108, 841, 49], [449, 849, 43], [1373, 796, 31], [1830, 783, 50], [681, 1025, 43]].forEach(([x, y, r], i) => shrub(details, x, y, r, i % 2 ? PALETTE.teal : '#5e6f45'));
 const front = layer(1.7);
 tree(front, 289, 1022, 211, false, 0.25);
 tree(front, 1689, 1037, 216, true, 0.65);
@@ -342,29 +431,51 @@ tree(front, 1689, 1037, 216, true, 0.65);
 const board = document.createElement('canvas');
 board.width = 1920; board.height = 1080;
 const b = board.getContext('2d');
-b.fillStyle = PALETTE.cream; b.fillRect(0, 0, 1920, 1080);
-b.fillStyle = b.createPattern(texture, 'repeat'); b.fillRect(0, 0, 1920, 1080);
+b.fillStyle = PALETTE.kraft; b.fillRect(0, 0, 1920, 1080);
+b.fillStyle = b.createPattern(textures.corrugated, 'repeat'); b.fillRect(0, 0, 1920, 1080);
+b.strokeStyle = '#e1c79a'; b.lineWidth = 5; b.strokeRect(21, 19, 1878, 1042);
+b.strokeStyle = 'rgba(63,46,26,0.3)'; b.lineWidth = 3; b.strokeRect(29, 27, 1862, 1026);
+
+const photoLight = document.createElement('canvas');
+photoLight.width = 1920; photoLight.height = 1080;
+const light = photoLight.getContext('2d');
+const warm = light.createRadialGradient(210, 90, 0, 210, 90, 1590);
+warm.addColorStop(0, 'rgba(255,233,182,0.30)'); warm.addColorStop(1, 'rgba(255,233,182,0)');
+light.fillStyle = warm; light.fillRect(0, 0, 1920, 1080);
+const falloff = light.createLinearGradient(0, 0, 1920, 1080);
+falloff.addColorStop(0, 'rgba(33,53,73,0)'); falloff.addColorStop(0.5, 'rgba(33,53,73,0.015)');
+falloff.addColorStop(1, 'rgba(33,53,73,0.10)');
+light.fillStyle = falloff; light.fillRect(0, 0, 1920, 1080);
+light.save(); light.translate(960, 540); light.scale(1, 0.65);
+const vignette = light.createRadialGradient(-180, -100, 480, 0, 0, 1210);
+vignette.addColorStop(0, 'rgba(30,39,46,0)'); vignette.addColorStop(1, 'rgba(30,39,46,0.14)');
+light.fillStyle = vignette; light.fillRect(-960, -831, 1920, 1662); light.restore();
+light.strokeStyle = 'rgba(54,42,26,0.28)'; light.lineWidth = 4;
+light.beginPath(); light.moveTo(48, 1038); light.lineTo(48, 44); light.lineTo(1872, 44); light.stroke();
+light.strokeStyle = 'rgba(255,244,218,0.6)'; light.lineWidth = 2;
+light.beginPath(); light.moveTo(48, 1038); light.lineTo(1872, 1038); light.lineTo(1872, 44); light.stroke();
 
 function motionTime(t) {
-  // 마지막 스텝을 처음 포즈와 맞춰 정지 프레임의 루프 경계도 이어 준다.
-  const step = Math.floor(((t % DURATION) + DURATION) % DURATION * RENDERING.fps + 1e-7);
-  return (step === 59 ? 0 : step) / RENDERING.fps;
+  // 포즈의 중앙을 샘플링해 60번째 스텝이 정확히 0번째 포즈로 이어진다.
+  const steps = DURATION * RENDERING.fps;
+  return Math.round(((t % DURATION) + DURATION) % DURATION * RENDERING.fps) % steps / RENDERING.fps;
 }
 function drawItem(item, t, cameraShift) {
   if (item.kind === 'water') {
     ctx.save(); ctx.clip(waterClip);
-    item.ribbons.forEach((r, i) => {
+    item.ribbons.forEach((variants, i) => {
+      const pose = Math.floor((Math.round(t * RENDERING.fps) + i * 4) / 4) % 3;
       ctx.save();
-      ctx.translate(21 * wave(t, i / 3), 4 * wave(t, i / 3 + 0.15)); drawPaper(r, cameraShift); ctx.restore();
+      ctx.translate(18 * wave(t, i / 3), 4 * wave(t, i / 3 + 0.15)); drawPaper(variants[pose], cameraShift); ctx.restore();
     }); ctx.restore(); return;
   }
   if (item.kind === 'smoke') {
     item.puffs.forEach((p, i) => {
-      const step = Math.floor(t * 12), age = ((step + i * 12) % 60) / 60;
+      const step = Math.round(t * RENDERING.fps), age = ((step + i * 12) % 60) / 60;
       const visibility = Math.sin(Math.PI * age) ** 2;
       ctx.save(); ctx.globalAlpha = visibility * 0.8;
-      ctx.translate(item.x + Math.sin(age * Math.PI * 2) * 13 * item.scale, item.y - age * 117 * item.scale);
-      ctx.scale(item.scale * (0.65 + age * 0.55), item.scale * (0.65 + age * 0.55)); drawPaper(p, cameraShift); ctx.restore();
+      ctx.translate(item.x + (age * 20 + Math.sin(age * TAU) * 9) * item.scale, item.y - age * 117 * item.scale);
+      ctx.scale(item.scale * (0.6 + age * 0.95), item.scale * (0.6 + age * 0.75)); drawPaper(p, cameraShift); ctx.restore();
     }); return;
   }
   if (item.parts) {
@@ -378,7 +489,8 @@ function drawItem(item, t, cameraShift) {
       [-55, 58].forEach(x => { ctx.beginPath(); ctx.moveTo(x, -45); ctx.lineTo(x - swing * 6, -item.y / item.scale + 48); ctx.stroke(); });
       ctx.restore();
     }
-    if (m?.kind === 'tree') ctx.rotate(swing * 0.015);
+    if (m?.kind === 'tree') ctx.rotate(Math.round(swing * 3) / 3 * 0.018);
+    drawPaper(item.backing, cameraShift);
     item.parts.forEach(p => drawPaper(p, cameraShift)); ctx.restore(); return;
   }
   drawPaper(item, cameraShift);
@@ -398,11 +510,7 @@ export function render(t) {
     ctx.restore();
   }
   ctx.restore();
-  // 판지 테두리를 얇게 겹쳐 매끈한 그라데이션 없이 가장자리를 눌러 준다.
-  for (let i = 0; i < 18; i++) {
-    ctx.strokeStyle = 'rgba(74,58,35,0.012)'; ctx.lineWidth = 2;
-    ctx.strokeRect(i * 2 + 1, i * 2 + 1, 1918 - i * 4, 1078 - i * 4);
-  }
+  ctx.drawImage(photoLight, 0, 0);
 }
 function resize() {
   const bounds = canvas.getBoundingClientRect();

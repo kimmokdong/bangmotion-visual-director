@@ -9,6 +9,7 @@ const content = $('#dialog-content');
 const selectionBar = $('#selection');
 const compareIds = new Set();
 let styles = [];
+let examples = {}; // 스타일 id → 수업 예시(examples/examples.json)
 let selectedId = null;
 let selecting = false;
 let selectionMessage = '';
@@ -184,6 +185,8 @@ function renderCard(style, index) {
   list(style.features).slice(0, 4).forEach((feature) => features.append(element('span', 'chip', feature)));
   const uses = element('p', 'use-cases');
   uses.append(element('strong', '', '추천 활용 분야'), document.createTextNode(list(style.use_cases).join(' · ')));
+  const example = examples[style.id];
+  const exampleLine = example ? element('p', 'example-line', `예시: ${example.grade} · ${example.title}`) : null;
   const actions = element('div', 'card-actions');
   const compareLabel = element('label', 'compare-label');
   const checkbox = element('input');
@@ -197,11 +200,23 @@ function renderCard(style, index) {
     if (compareIds.size === 2) openCompare(checkbox);
   });
   compareLabel.append(checkbox, document.createTextNode('비교'));
-  actions.append(compareLabel, selectButton(style));
-  body.append(features, uses, actions);
+  actions.append(compareLabel);
+  if (example) {
+    // 같은 장면 데모와 별개로, 이 스타일이 잘 맞는 수업 주제로 만든 영상을 새 탭에서 연다.
+    const link = element('a', 'example-button', '수업 예시 ▶');
+    link.href = `../examples/${example.file}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.title = `수업 예시: ${example.grade} ${example.title} (새 탭)`;
+    link.setAttribute('aria-label', link.title);
+    link.addEventListener('click', (event) => event.stopPropagation());
+    actions.append(link);
+  }
+  actions.append(selectButton(style));
+  body.append(features, uses, ...(exampleLine ? [exampleLine] : []), actions);
   card.append(media, body);
   card.addEventListener('click', (event) => {
-    if (!event.target.closest('button, input, label')) openDetail(index, card);
+    if (!event.target.closest('button, input, label, a')) openDetail(index, card);
   });
   card.addEventListener('keydown', (event) => {
     if (event.target === card && (event.key === 'Enter' || event.key === ' ')) {
@@ -408,6 +423,7 @@ async function init() {
     const results = await Promise.allSettled(FALLBACK_IDS.map((id) => getJSON(`../styles/${id}/style.json`)));
     catalog = results.filter((result) => result.status === 'fulfilled' && validStyle(result.value)).map((result) => result.value);
   }
+  try { examples = await getJSON('../examples/examples.json'); } catch { examples = {}; } // 없으면 예시 버튼 없이 연다
   styles = [...new Map(catalog.map((style) => [style.id, style])).values()].sort((a, b) => a.number - b.number);
   grid.replaceChildren(...styles.map(renderCard));
   $('#style-count').textContent = `${styles.length}가지 스타일`;

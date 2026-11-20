@@ -112,6 +112,7 @@ node scripts/serve.js --open
 | `sound/` | CC0 효과음 라이브러리와 출처 |
 | `vendor/three/` | three.js r170 로컬 사본(외부 CDN 없이 동작) |
 | `gallery/` | 스타일 선택 화면 |
+| `examples/` | 스타일마다 잘 맞는 수업 주제로 만든 예시 영상(`preview.html`)과 목록 `examples.json`. 갤러리 카드의 **수업 예시 ▶**로 연다 |
 | `scripts/` | `serve` / `validate-demo` / `create-contact-sheet` / `capture-previews` / `sound` / `bundle-preview` / `render-demo` / `install` |
 | `templates/` | 수업 도입, 개념 설명, 시네마틱 인트로, 인포그래픽 뼈대와 장면·소리 설정 예시 |
 

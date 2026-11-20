@@ -1,0 +1,42 @@
+{
+  "01-isometric": {
+    "title": "우리 고장의 공공기관",
+    "grade": "4학년 사회",
+    "file": "01-isometric/preview.html"
+  },
+  "02-stylized-3d": {
+    "title": "지구의 자전과 낮과 밤",
+    "grade": "6학년 과학",
+    "file": "02-stylized-3d/preview.html"
+  },
+  "03-storybook-2p5d": {
+    "title": "식물의 한살이",
+    "grade": "4학년 과학",
+    "file": "03-storybook-2p5d/preview.html"
+  },
+  "04-flat-vector": {
+    "title": "법이 만들어지는 과정",
+    "grade": "6학년 사회",
+    "file": "04-flat-vector/preview.html"
+  },
+  "05-paper-cutout": {
+    "title": "옛날의 설날",
+    "grade": "3학년 사회",
+    "file": "05-paper-cutout/preview.html"
+  },
+  "06-miniature-diorama": {
+    "title": "전자석의 성질",
+    "grade": "6학년 과학",
+    "file": "06-miniature-diorama/preview.html"
+  },
+  "07-infographic": {
+    "title": "띠그래프로 나타내기",
+    "grade": "6학년 수학",
+    "file": "07-infographic/preview.html"
+  },
+  "08-glassmorphism": {
+    "title": "인공지능이 사진을 알아보는 과정",
+    "grade": "6학년 실과",
+    "file": "08-glassmorphism/preview.html"
+  }
+}
